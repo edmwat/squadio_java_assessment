@@ -1,8 +1,6 @@
 package com.squadio.assessment.services;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -16,12 +14,13 @@ import com.squadio.assessment.models.AccountUser;
 public class AuthService {
 	@Autowired
 	private RestTemplate restTemplate;
+	private final String baseUrl = "https://purple-fire-5350.getsandbox.com";
 	
 	public AccountUser getLoggedinUser() {
 		String username = SecurityContextHolder. getContext(). getAuthentication().getName();		
 		
 		if(username != null) {
-			return restTemplate.getForObject("https://purple-fire-5350.getsandbox.com/users/"+username, AccountUser.class);
+			return restTemplate.getForObject(baseUrl+"/users/"+username, AccountUser.class);
 		}
 		return new AccountUser("1","anonymous");
 	}

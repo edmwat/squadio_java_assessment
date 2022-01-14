@@ -1,14 +1,10 @@
 package com.squadio.assessment.services;
 
-import java.io.IOException;
 import org.springframework.http.MediaType;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -16,15 +12,11 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.squadio.assessment.exceptions.ForbbidenAccessException;
 import com.squadio.assessment.models.Account;
 import com.squadio.assessment.models.Statement;
@@ -35,7 +27,8 @@ public class AccountsService {
 	
 	private final RestTemplate restTemplate;
 	private final AuthService authService;
-	ObjectMapper mapper = new ObjectMapper();
+	private final ObjectMapper mapper = new ObjectMapper();
+	private final String baseUrl = "https://purple-fire-5350.getsandbox.com";
 	
 	@Autowired
 	public AccountsService(RestTemplate restTemplate, AuthService authService) {
@@ -46,11 +39,11 @@ public class AccountsService {
 	public List<Account> getUserAccounts(String userId){
 		boolean isAdmin = this.authService.ifLoggedinUserIsAdmin();
 		if(isAdmin) {
-			return restTemplate.getForObject("https://purple-fire-5350.getsandbox.com/accounts/"+userId, List.class);
+			return restTemplate.getForObject(baseUrl+"/accounts/"+userId, List.class);
 		}else {
 			boolean isRequestedAccForLoggedinUser = this.authService.checkIfUserIdIsTheLoggedinUser(userId);
 			if(isRequestedAccForLoggedinUser) {
-				return restTemplate.getForObject("https://purple-fire-5350.getsandbox.com/accounts/"+userId, List.class);
+				return restTemplate.getForObject(baseUrl+"/accounts/"+userId, List.class);
 			}else 
 				throw new ForbbidenAccessException(); 
 		}		
@@ -71,7 +64,7 @@ public class AccountsService {
 				HttpHeaders headers = new HttpHeaders();
 			    headers.setContentType(MediaType.APPLICATION_JSON);
 				HttpEntity<String> request = new HttpEntity<String>(accountIdJsonObj.toString(), headers);
-				List<Statement> serializedStatements = restTemplate.postForObject("https://purple-fire-5350.getsandbox.com:443/accounts/statements",request, List.class);
+				List<Statement> serializedStatements = restTemplate.postForObject(baseUrl+"/accounts/statements",request, List.class);
 				 deserializedStatements = mapper.convertValue(serializedStatements, new TypeReference<List<Statement>>() { });
 			}catch(Exception  e) {
 				System.out.println(e);
@@ -171,29 +164,4 @@ class ApiStatementReqObj{
 	public String getAccountId() {
 		return accountId;
 	}
-}
-class StatementFilterWithDates{
-	private String accountId;
-	private Date fromDate;
-	private Date toDate;
-	
-	public StatementFilterWithDates() {}
-	public StatementFilterWithDates(String accountId, Date fromDate, Date toDate) {
-		this.accountId = accountId;
-		this.fromDate = fromDate;
-		this.toDate = toDate;
-	}
-	
-	public String getAccountId() {
-		return accountId;
-	}
-	public Date getFromDate() {
-		return fromDate;
-	}
-	public Date getToDate() {
-		return toDate;
-	}
-	
-	
-	
 }
